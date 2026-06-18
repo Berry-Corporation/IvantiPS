@@ -38,7 +38,7 @@ Describe 'Invoke-IvantiMethod' {
 
     It 'uses current level in debug output when body is present' {
         $script:capturedMessages = @()
-        Mock -CommandName Write-DebugMessage -MockWith {
+        Mock -CommandName Write-Debug -MockWith {
             param([string]$Message)
             $script:capturedMessages += $Message
         }
@@ -52,7 +52,7 @@ Describe 'Invoke-IvantiMethod' {
         Invoke-IvantiMethod -URI 'https://example.test/api/odata/incidents' -Body '{"ping":"pong"}' -Level 1 | Out-Null
 
         ($script:capturedMessages | Where-Object {
-            $_ -like "[Invoke-IvantiMethod 1] Added body to splatparm:*"
+            $_ -match '^\[Invoke-IvantiMethod 1\] Added body to splatparm:'
         }).Count | Should -BeGreaterThan 0
     }
 }
