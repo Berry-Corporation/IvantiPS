@@ -9,6 +9,9 @@ function Get-IvantiIncident {
     .PARAMETER RecID
         Ivanti Record ID for a specific incident
 
+    .PARAMETER IncidentNumber
+        Incident number for a specific incident. Internally resolved to RecID.
+
     .PARAMETER AgencyName
         Filter to get incidents from a specific agency name
 
@@ -31,6 +34,11 @@ function Get-IvantiIncident {
     .EXAMPLE
         Get-IvantiAgency -RecID DC218F83EC504222B148EF1344E15BCB
 
+    .EXAMPLE
+        Get-IvantiIncident -IncidentNumber 123456
+
+        Resolves IncidentNumber to RecID, then returns the incident
+
     .NOTES
         https://help.ivanti.com/ht/help/en_US/ISM/2020/admin/Content/Configure/API/Get-Business-Object-by-Filter.htm
         https://help.ivanti.com/ht/help/en_US/ISM/2020/admin/Content/Configure/API/Get-Business-Object-by-Search.htm
@@ -39,6 +47,7 @@ function Get-IvantiIncident {
     [CmdletBinding()]
     param(
         [string]$RecID,
+        [int]$IncidentNumber,
         [string]$AgencyName,
         [ValidateSet('Closed','Active','Resolved','Cancelled','All')]
         [string]$Status = 'Active',
@@ -65,8 +74,28 @@ function Get-IvantiIncident {
             }
         }
 
+        $IvantiTenantID = (Get-IvantiPSConfig).IvantiTenantID
+
+        if (-not $RecID -and $PSBoundParameters.ContainsKey('IncidentNumber')) {
+            Write-DebugMessage "[$($MyInvocation.MyCommand.Name)] IncidentNumber [$IncidentNumber] passed in, looking up RecID"
+
+            $IncidentRecID = Invoke-IvantiMethod -Uri "https://$IvantiTenantID/api/odata/businessobject/incidents" -GetParameter @{
+                '$select' = 'RecID'
+                '$filter' = "IncidentNumber eq $IncidentNumber"
+                '$top'    = 1
+            }
+
+            if ($IncidentRecID) {
+                $RecID = $IncidentRecID.RecID
+                Write-Verbose "[$($MyInvocation.MyCommand.Name)] IncidentNumber [$IncidentNumber] resolved to RecID [$RecID]"
+            } else {
+                Write-Warning "[$($MyInvocation.MyCommand.Name)] No incident found for IncidentNumber [$IncidentNumber]"
+                return
+            }
+        }
+
         # If one or more parameters are passed in, use only one of them
-        # Order of preference is RecID, Agency, then AgencyShortName
+        # Order of preference is RecID, Status, then AgencyName
         # if no parameters are passed in, then do not set any get parameters
         #
         if ($RecID) {
@@ -82,8 +111,6 @@ function Get-IvantiIncident {
         } else {
             Write-DebugMessage "[$($MyInvocation.MyCommand.Name)] No RecID or Status parameters passed in"
         }
-
-        $IvantiTenantID = (Get-IvantiPSConfig).IvantiTenantID
 
         if ($AgencyName) {
             # https://help.ivanti.com/ht/help/en_US/ISM/2020/admin/Content/Configure/API/Get-Related-Business-Objects-API.htm
