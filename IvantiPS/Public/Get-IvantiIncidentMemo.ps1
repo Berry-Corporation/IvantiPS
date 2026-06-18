@@ -13,7 +13,7 @@ function Get-IvantiIncidentMemo {
         Return all related journal records instead of filtering to Note and Memo.
 
     .NOTES
-        https://help.ivanti.com/ht/help/en_US/ISM/2020/admin/Content/Configure/API/Get-Related-Business-Objects-API.htm
+        https://help.ivanti.com/ht/help/en_US/ISM/2022/admin/Content/Configure/API/Get-Related-Business-Objects-API.htm
     #>
     [CmdletBinding()]
     param(
@@ -27,7 +27,7 @@ function Get-IvantiIncidentMemo {
         Write-DebugMessage "[$($MyInvocation.MyCommand.Name)] Function started. PSBoundParameters: $($PSBoundParameters | Out-String)"
 
         $IvantiTenantID = (Get-IvantiPSConfig).IvantiTenantID
-        $uri = "https://{0}/api/odata/businessobject/incidents('{1}')/IncidentHasJournal" -f $IvantiTenantID, $RecID
+        $uri = "https://{0}/api/odata/businessobject/incidents('{1}')/IncidentContainsJournal" -f $IvantiTenantID, $RecID
 
         $GetParameter = @{}
         if (-not $AllJournalTypes) {

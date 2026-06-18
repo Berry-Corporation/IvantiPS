@@ -4,13 +4,13 @@ function Get-IvantiIncidentAttachment {
         List attachments for an incident.
 
     .DESCRIPTION
-        Returns attachment records related to an incident.
+        Returns attachments for an incident by incident RecID.
 
     .PARAMETER RecID
         Ivanti Record ID for the incident.
 
     .NOTES
-        https://help.ivanti.com/ht/help/en_US/ISM/2020/admin/Content/Configure/API/Get-Related-Business-Objects-API.htm
+        https://help.ivanti.com/ht/help/en_US/ISM/2022/admin/Content/Configure/API/Get-Attachments.htm
     #>
     [CmdletBinding()]
     param(
@@ -23,11 +23,12 @@ function Get-IvantiIncidentAttachment {
         Write-DebugMessage "[$($MyInvocation.MyCommand.Name)] Function started. PSBoundParameters: $($PSBoundParameters | Out-String)"
 
         $IvantiTenantID = (Get-IvantiPSConfig).IvantiTenantID
-        $uri = "https://{0}/api/odata/businessobject/incidents('{1}')/IncidentHasAttachment" -f $IvantiTenantID, $RecID
+        $uri = "https://{0}/api/rest/Attachment" -f $IvantiTenantID
+        $GetParameter = @{ ID = $RecID }
     }
 
     process {
-        Invoke-IvantiMethod -URI $uri
+        Invoke-IvantiMethod -URI $uri -GetParameter $GetParameter
     }
 
     end {

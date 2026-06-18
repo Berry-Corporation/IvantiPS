@@ -22,7 +22,7 @@ Describe 'New Ivanti feature cmdlets' {
         Get-IvantiIncidentMemo -RecID 'INC-RECID' | Out-Null
 
         Assert-MockCalled -CommandName Invoke-IvantiMethod -Times 1 -Exactly -ParameterFilter {
-            $Uri -eq "https://tenant.ivanticloud.com/api/odata/businessobject/incidents('INC-RECID')/IncidentHasJournal" -and
+            $Uri -eq "https://tenant.ivanticloud.com/api/odata/businessobject/incidents('INC-RECID')/IncidentContainsJournal" -and
             $GetParameter['$filter'] -eq "(JournalType eq 'Note' or JournalType eq 'Memo')"
         }
     }
@@ -33,7 +33,7 @@ Describe 'New Ivanti feature cmdlets' {
         Get-IvantiServiceRequestMemo -RecID 'SR-RECID' -AllJournalTypes | Out-Null
 
         Assert-MockCalled -CommandName Invoke-IvantiMethod -Times 1 -Exactly -ParameterFilter {
-            $Uri -eq "https://tenant.ivanticloud.com/api/odata/businessobject/servicereqs('SR-RECID')/ServiceReqHasJournal" -and
+            $Uri -eq "https://tenant.ivanticloud.com/api/odata/businessobject/servicereqs('SR-RECID')/ServiceReqContainsJournal" -and
             -not $GetParameter.ContainsKey('$filter')
         }
     }
@@ -44,7 +44,8 @@ Describe 'New Ivanti feature cmdlets' {
         Get-IvantiIncidentAttachment -RecID 'INC-RECID' | Out-Null
 
         Assert-MockCalled -CommandName Invoke-IvantiMethod -Times 1 -Exactly -ParameterFilter {
-            $Uri -eq "https://tenant.ivanticloud.com/api/odata/businessobject/incidents('INC-RECID')/IncidentHasAttachment"
+            $Uri -eq "https://tenant.ivanticloud.com/api/rest/Attachment" -and
+            $GetParameter['ID'] -eq 'INC-RECID'
         }
     }
 
@@ -54,7 +55,8 @@ Describe 'New Ivanti feature cmdlets' {
         Get-IvantiServiceRequestAttachment -RecID 'SR-RECID' | Out-Null
 
         Assert-MockCalled -CommandName Invoke-IvantiMethod -Times 1 -Exactly -ParameterFilter {
-            $Uri -eq "https://tenant.ivanticloud.com/api/odata/businessobject/servicereqs('SR-RECID')/ServiceReqHasAttachment"
+            $Uri -eq "https://tenant.ivanticloud.com/api/rest/Attachment" -and
+            $GetParameter['ID'] -eq 'SR-RECID'
         }
     }
 
@@ -65,7 +67,7 @@ Describe 'New Ivanti feature cmdlets' {
         Save-IvantiAttachment -RecID 'ATT-RECID' -Path '/tmp/out.bin' | Out-Null
 
         Assert-MockCalled -CommandName Invoke-WebRequest -Times 1 -Exactly -ParameterFilter {
-            $Uri -eq "https://tenant.ivanticloud.com/api/odata/businessobject/attachments('ATT-RECID')/Data" -and
+            $Uri -eq "https://tenant.ivanticloud.com/api/rest/Attachment?ID=ATT-RECID" -and
             $Method -eq 'GET' -and
             $OutFile -eq '/tmp/out.bin' -and
             $Headers.Authorization -eq 'test-session'

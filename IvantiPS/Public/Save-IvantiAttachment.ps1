@@ -1,19 +1,19 @@
 function Save-IvantiAttachment {
     <#
     .SYNOPSIS
-        Download an attachment by RecID.
+        Download attachments for a business object RecID.
 
     .DESCRIPTION
-        Downloads attachment content from Ivanti and saves it to a local file path.
+        Downloads attachment response content from Ivanti and saves it to a local file path.
 
     .PARAMETER RecID
-        Ivanti Record ID for the attachment.
+        Ivanti Record ID for the parent business object.
 
     .PARAMETER Path
         Destination file path.
 
     .NOTES
-        https://help.ivanti.com/ht/help/en_US/ISM/2020/admin/Content/Configure/API/Get-Business-Object-by-Reference.htm
+        https://help.ivanti.com/ht/help/en_US/ISM/2022/admin/Content/Configure/API/Get-Attachments.htm
     #>
     [CmdletBinding()]
     param(
@@ -34,7 +34,7 @@ function Save-IvantiAttachment {
             break
         }
 
-        $uri = "https://{0}/api/odata/businessobject/attachments('{1}')/Data" -f $IvantiTenantID, $RecID
+        $uri = "https://{0}/api/rest/Attachment?ID={1}" -f $IvantiTenantID, $RecID
         $headers = @{Authorization = $session}
 
         $directory = Split-Path -Path $Path -Parent
