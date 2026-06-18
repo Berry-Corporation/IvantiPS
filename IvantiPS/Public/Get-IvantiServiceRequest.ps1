@@ -9,6 +9,9 @@ function Get-IvantiServiceRequest {
     .PARAMETER RecID
         Ivanti Record ID for a specific service request
 
+    .PARAMETER ServiceRequestNumber
+        Service request number for a specific request. Internally resolved to RecID.
+
     .PARAMETER AgencyName
         Filter to get service requests from a specific agency name
 
@@ -37,6 +40,11 @@ function Get-IvantiServiceRequest {
 
         Returns all ServiceRequests
 
+    .EXAMPLE
+        Get-IvantiServiceRequest -ServiceRequestNumber 123456
+
+        Resolves ServiceRequestNumber to RecID, then returns the request
+
     .NOTES
         https://help.ivanti.com/ht/help/en_US/ISM/2020/admin/Content/Configure/API/Get-Business-Object-by-Filter.htm
         https://help.ivanti.com/ht/help/en_US/ISM/2020/admin/Content/Configure/API/Get-Business-Object-by-Search.htm
@@ -45,6 +53,7 @@ function Get-IvantiServiceRequest {
     [CmdletBinding()]
     param(
         [string]$RecID,
+        [int]$ServiceRequestNumber,
         [string]$AgencyName,
         [ValidateSet('Closed','Active','Fulfilled','Cancelled','Waiting For Customer','All')]
         [string]$Status = 'Active',
@@ -54,6 +63,7 @@ function Get-IvantiServiceRequest {
     begin {
         Write-Verbose "[$($MyInvocation.MyCommand.Name) $Level] Function started"
         Write-DebugMessage "[$($MyInvocation.MyCommand.Name) $Level] Function Started. PSBoundParameters: $($PSBoundParameters | Out-String)"
+        $SkipQuery = $false
 
         # Build field list to select from so we don't get a bunch of extra fields we don't want
         #
@@ -73,8 +83,14 @@ function Get-IvantiServiceRequest {
             }
         }
 
+        if (-not $RecID -and $PSBoundParameters.ContainsKey('ServiceRequestNumber')) {
+            Write-DebugMessage "[$($MyInvocation.MyCommand.Name)] ServiceRequestNumber [$ServiceRequestNumber] passed in, looking up RecID"
+            $RecID = Get-IvantiRecIdByServiceRequestNumber -ServiceRequestNumber $ServiceRequestNumber
+            if (-not $RecID) { $SkipQuery = $true }
+        }
+
         # If one or more parameters are passed in, use only one of them
-        # Order of preference is RecID, Agency, then AgencyShortName
+        # Order of preference is RecID, Status, then AgencyName
         # if no parameters are passed in, then do not set any get parameters
         #
         if ($RecID) {
@@ -113,6 +129,7 @@ function Get-IvantiServiceRequest {
     } # end begin
 
     process {
+        if ($SkipQuery) { return }
         Invoke-IvantiMethod -URI $uri -GetParameter $GetParameter
     }
 

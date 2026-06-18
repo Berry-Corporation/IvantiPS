@@ -58,6 +58,7 @@ function Get-IvantiIncident {
     begin {
         Write-Verbose "[$($MyInvocation.MyCommand.Name) $Level] Function started"
         Write-DebugMessage "[$($MyInvocation.MyCommand.Name) $Level] Function Started. PSBoundParameters: $($PSBoundParameters | Out-String)"
+        $SkipQuery = $false
 
         # Build field list to select from so we don't get a bunch of extra fields we don't want
         #
@@ -78,20 +79,8 @@ function Get-IvantiIncident {
 
         if (-not $RecID -and $PSBoundParameters.ContainsKey('IncidentNumber')) {
             Write-DebugMessage "[$($MyInvocation.MyCommand.Name)] IncidentNumber [$IncidentNumber] passed in, looking up RecID"
-
-            $IncidentRecID = Invoke-IvantiMethod -Uri "https://$IvantiTenantID/api/odata/businessobject/incidents" -GetParameter @{
-                '$select' = 'RecID'
-                '$filter' = "IncidentNumber eq $IncidentNumber"
-                '$top'    = 1
-            }
-
-            if ($IncidentRecID) {
-                $RecID = $IncidentRecID.RecID
-                Write-Verbose "[$($MyInvocation.MyCommand.Name)] IncidentNumber [$IncidentNumber] resolved to RecID [$RecID]"
-            } else {
-                Write-Warning "[$($MyInvocation.MyCommand.Name)] No incident found for IncidentNumber [$IncidentNumber]"
-                return
-            }
+            $RecID = Get-IvantiRecIdByIncidentNumber -IncidentNumber $IncidentNumber
+            if (-not $RecID) { $SkipQuery = $true }
         }
 
         # If one or more parameters are passed in, use only one of them
@@ -138,6 +127,7 @@ function Get-IvantiIncident {
     } # end begin
 
     process {
+        if ($SkipQuery) { return }
         Invoke-IvantiMethod -URI $uri -GetParameter $GetParameter
     }
 

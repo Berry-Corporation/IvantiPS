@@ -86,6 +86,8 @@ FunctionsToExport = @(
     'Get-IvantiCI',
     'Get-IvantiEmployee',
     'Get-IvantiIncident',
+    'Get-IvantiRecIdByIncidentNumber',
+    'Get-IvantiRecIdByServiceRequestNumber',
     'Get-IvantiSession',
     'Get-IvantiServiceRequest',
     'Invoke-IvantiMethod'
@@ -137,4 +139,3 @@ HelpInfoURI = 'https://github.com/joeywas/IvantiPS'
 # DefaultCommandPrefix = ''
 
 }
-

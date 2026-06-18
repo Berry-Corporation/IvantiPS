@@ -1,7 +1,7 @@
-Describe 'Get-IvantiIncident' {
+Describe 'Get-IvantiServiceRequest' {
     BeforeAll {
         $repoRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-        . "$repoRoot\IvantiPS\Public\Get-IvantiIncident.ps1"
+        . "$repoRoot\IvantiPS\Public\Get-IvantiServiceRequest.ps1"
     }
 
     BeforeEach {
@@ -21,15 +21,15 @@ Describe 'Get-IvantiIncident' {
             }
         }
 
-        function Get-IvantiRecIdByIncidentNumber {
-            param([int]$IncidentNumber)
-            "incident-recid-$IncidentNumber"
+        function Get-IvantiRecIdByServiceRequestNumber {
+            param([int]$ServiceRequestNumber)
+            "servicereq-recid-$ServiceRequestNumber"
         }
 
         function Invoke-IvantiMethod {}
     }
 
-    It 'resolves IncidentNumber to RecID and uses RecID filter internally' {
+    It 'resolves ServiceRequestNumber to RecID and uses RecID filter internally' {
         $script:invokeCalls = @()
         function Invoke-IvantiMethod {
             param([string]$Uri, [hashtable]$GetParameter)
@@ -38,32 +38,31 @@ Describe 'Get-IvantiIncident' {
                 GetParameter = $GetParameter
             }
 
-            if ($GetParameter['$filter'] -eq "RecID eq 'incident-recid-123456'") {
+            if ($GetParameter['$filter'] -eq "RecID eq 'servicereq-recid-123456'") {
                 return [PSCustomObject]@{
-                    RecID          = 'incident-recid-123456'
-                    IncidentNumber = 123456
+                    RecID            = 'servicereq-recid-123456'
+                    ServiceReqNumber = 123456
                 }
             }
         }
 
-        $output = Get-IvantiIncident -IncidentNumber 123456 -Verbose 4>&1
+        $output = Get-IvantiServiceRequest -ServiceRequestNumber 123456 -Verbose 4>&1
 
         ($script:invokeCalls | Where-Object {
-            $_.GetParameter['$filter'] -eq "RecID eq 'incident-recid-123456'"
+            $_.GetParameter['$filter'] -eq "RecID eq 'servicereq-recid-123456'"
         }).Count | Should -Be 1
     }
 
-    It 'warns and stops when IncidentNumber does not resolve to a RecID' {
-        function Get-IvantiRecIdByIncidentNumber {
-            param([int]$IncidentNumber)
+    It 'stops when ServiceRequestNumber does not resolve to a RecID' {
+        function Get-IvantiRecIdByServiceRequestNumber {
+            param([int]$ServiceRequestNumber)
             $null
         }
         Mock -CommandName Invoke-IvantiMethod
 
-        $result = Get-IvantiIncident -IncidentNumber 999999
+        $result = Get-IvantiServiceRequest -ServiceRequestNumber 999999
 
         $result | Should -BeNullOrEmpty
-
         Assert-MockCalled -CommandName Invoke-IvantiMethod -Times 0
     }
 }
