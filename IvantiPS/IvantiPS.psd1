@@ -86,9 +86,14 @@ FunctionsToExport = @(
     'Get-IvantiCI',
     'Get-IvantiEmployee',
     'Get-IvantiIncident',
+    'Get-IvantiIncidentAttachment',
+    'Get-IvantiIncidentMemo',
     'Get-IvantiSession',
     'Get-IvantiServiceRequest',
-    'Invoke-IvantiMethod'
+    'Get-IvantiServiceRequestAttachment',
+    'Get-IvantiServiceRequestMemo',
+    'Invoke-IvantiMethod',
+    'Save-IvantiAttachment'
 )
 
 # List of all modules packaged with this module
@@ -137,4 +142,3 @@ HelpInfoURI = 'https://github.com/joeywas/IvantiPS'
 # DefaultCommandPrefix = ''
 
 }
-
