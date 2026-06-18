@@ -88,7 +88,7 @@ function Invoke-IvantiMethod {
             Verbose         = $false
         }
         if ($body) {
-            Write-Debug "[$($MyInvocation.MyCommand.Name) $LevelOfRecursion] Added body to splatparm: $($body | Out-String)"
+            Write-Debug "[$($MyInvocation.MyCommand.Name) $Level] Added body to splatparm: $($body | Out-String)"
             $splatParameters += @{
                 Body = $body
             }
@@ -114,7 +114,7 @@ function Invoke-IvantiMethod {
         # Test to see if there was an error code in the
         # response from invoke-restmethod
         #
-        Test-ServerResponse -InputObject $Response
+        Test-ServerResponse -InputObject $RestResponse
 #endregion Execute the actual query
     } # End begin
 
