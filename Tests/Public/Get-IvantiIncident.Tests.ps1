@@ -20,13 +20,16 @@ Describe 'Get-IvantiIncident' {
                 RecID = 'agency-recid'
             }
         }
-
-        function Invoke-IvantiMethod {}
     }
 
     It 'resolves IncidentNumber to RecID and uses RecID filter internally' {
-        Mock -CommandName Invoke-IvantiMethod -MockWith {
+        $script:invokeCalls = @()
+        function Invoke-IvantiMethod {
             param([string]$Uri, [hashtable]$GetParameter)
+            $script:invokeCalls += [PSCustomObject]@{
+                Uri          = $Uri
+                GetParameter = $GetParameter
+            }
 
             if ($GetParameter['$filter'] -eq 'IncidentNumber eq 123456') {
                 return [PSCustomObject]@{ RecID = 'incident-recid-123' }
@@ -43,33 +46,43 @@ Describe 'Get-IvantiIncident' {
         $output = Get-IvantiIncident -IncidentNumber 123456 -Verbose 4>&1
         $verboseMessages = $output | Where-Object { $_ -is [System.Management.Automation.VerboseRecord] } | ForEach-Object Message
 
-        Assert-MockCalled -CommandName Invoke-IvantiMethod -Times 1 -ParameterFilter {
-            $GetParameter['$select'] -eq 'RecID' -and
-            $GetParameter['$filter'] -eq 'IncidentNumber eq 123456' -and
-            $GetParameter['$top'] -eq 1
-        }
+        ($script:invokeCalls | Where-Object {
+            $_.GetParameter['$select'] -eq 'RecID' -and
+            $_.GetParameter['$filter'] -eq 'IncidentNumber eq 123456' -and
+            $_.GetParameter['$top'] -eq 1
+        }).Count | Should -Be 1
 
-        Assert-MockCalled -CommandName Invoke-IvantiMethod -Times 1 -ParameterFilter {
-            $GetParameter['$filter'] -eq "RecID eq 'incident-recid-123'"
-        }
+        ($script:invokeCalls | Where-Object {
+            $_.GetParameter['$filter'] -eq "RecID eq 'incident-recid-123'"
+        }).Count | Should -Be 1
 
         $verboseMessages | Should -Contain '[Get-IvantiIncident] IncidentNumber [123456] resolved to RecID [incident-recid-123]'
     }
 
     It 'warns and stops when IncidentNumber does not resolve to a RecID' {
-        Mock -CommandName Invoke-IvantiMethod -MockWith { $null }
-        Mock -CommandName Write-Warning
+        $script:invokeCalls = @()
+        function Invoke-IvantiMethod {
+            param([string]$Uri, [hashtable]$GetParameter)
+            $script:invokeCalls += [PSCustomObject]@{
+                Uri          = $Uri
+                GetParameter = $GetParameter
+            }
+            $null
+        }
+        $script:warningMessages = @()
+        function Write-Warning {
+            param([string]$Message)
+            $script:warningMessages += $Message
+        }
 
         $result = Get-IvantiIncident -IncidentNumber 999999
 
         $result | Should -BeNullOrEmpty
 
-        Assert-MockCalled -CommandName Invoke-IvantiMethod -Times 1 -ParameterFilter {
-            $GetParameter['$filter'] -eq 'IncidentNumber eq 999999'
-        }
+        ($script:invokeCalls | Where-Object {
+            $_.GetParameter['$filter'] -eq 'IncidentNumber eq 999999'
+        }).Count | Should -Be 1
 
-        Assert-MockCalled -CommandName Write-Warning -Times 1 -ParameterFilter {
-            $Message -eq '[Get-IvantiIncident] No incident found for IncidentNumber [999999]'
-        }
+        $script:warningMessages | Should -Contain '[Get-IvantiIncident] No incident found for IncidentNumber [999999]'
     }
 }
